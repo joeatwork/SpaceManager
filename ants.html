@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ants</title>
+</head>
+<script src="lib/modernizr-1.6.min.js"></script>
+<script src="src/SpaceManager.js"></script>
+<script src="src/dudes.js"></script>
+<body>
+  <canvas id="antsCanvas" 
+          width="500" height="500" 
+          style="border: 1px solid black;">
+    We roll HTML5-style up in here, please be advised
+  </canvas>
+<script>
+window.onload = function() {
+    var canvas = document.getElementById("antsCanvas");
+    var gfx = canvas.getContext("2d");
+    var ticks = 0;
+    
+    dudes = new Dudes(gfx);
+    var animation = setInterval(function() {	
+	ticks++;
+	dudes.update(ticks);
+    }, 100);
+};
+</script>
+</body>
+</html>
