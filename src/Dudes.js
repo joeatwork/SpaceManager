@@ -1,3 +1,4 @@
+// REQUIRES SpaceManager.js
 Dudes = (function(){
     ////////////////////////////////////////////////////
     // View
@@ -14,7 +15,10 @@ Dudes = (function(){
     Sprites.UP = 1;
     Sprites.RIGHT = 2;
     Sprites.LEFT = 3;
+
+    Sprites.SHEET_CELL_SIZE = 20;
     Sprites.sheet = null;
+    
 
     Sprites.setSheet = function(sheet) { /* ??? */
         Sprites.sheet = sheet;
@@ -36,20 +40,22 @@ Dudes = (function(){
      * orientation : one of UP, DOWN, LEFT, RIGHT
      * ticks : absolute animation time
      */
-    Sprites.prototype.draw = function(posX, posY, orientation, ticks) {
+    Sprites.prototype.draw = function(posX, posY, width, orientation, ticks) {
 	if(! Sprites.sheet) return;
 
-        var cell = ticks % 2;
-        var cellOffset = (orientation * 40) + (cell * 20);
+        var cell = ticks % 2;	
+        var cellOffset = 
+	    (orientation * Sprites.SHEET_CELL_SIZE * 2) + 
+	    (cell * Sprites.SHEET_CELL_SIZE);
         this.gfx.drawImage(Sprites.sheet,
 			   0, // source x
 			   cellOffset, // source Y
-			   20, // source width
-			   20, // source height
+			   Sprites.SHEET_CELL_SIZE, // source width
+			   Sprites.SHEET_CELL_SIZE, // source height
 			   posX, // dest x
 			   posY, // dest y
-			   20, // dest width
-			   20); // dest height
+			   width, // dest width
+			   width); // dest height
     };
 
     //////////////////////////////////////////////////////////
@@ -69,13 +75,23 @@ Dudes = (function(){
 	    bottom: yHighBound
 	};
 	this.strategy = strategy;
+	this.space = SpaceManager.treeSpace(this.bounds.left,
+					    this.bounds.right,
+					    this.bounds.top,
+					    this.bounds.bottom);
 
         for( var i = 0; i < count ; i++) {
-            this.dudes.push({
+	    var newDude = {
                 posX : Math.floor(Math.random() * 500),
                 posY : Math.floor(Math.random() * 500),
 		heading : 0,
-            });
+		width : 10 // CHANGEME TO 20
+            };
+            this.dudes.push(newDude);
+	    newDude.spaceHandle = this.space.add(newDude, 
+						 newDude.posX, newDude.posY,
+						 newDude.posX + newDude.width,
+						 newDude.posY + newDude.width);
 	}
     };
 
@@ -102,7 +118,6 @@ Dudes = (function(){
     // Will FAIL SILENTLY if distance from point to region 
     // is much larger than maxBound - minBound
     Dudes.prototype.wrap = function(point, minBound, maxBound) {
-	// minBound - maxBound < tiny???
 	var sane = 100;
 
 	while(sane && (minBound > point)) {
@@ -131,7 +146,6 @@ Dudes = (function(){
 	    this.bounds.bottom - this.bounds.top);
     };
 
-
     Dudes.prototype.move = function(ticks) {
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
@@ -158,7 +172,8 @@ Dudes = (function(){
 	    var orientation = this.orientToward(nextDude.heading);
 
 	    this.sprites.draw(nextDude.posX, 
-			      nextDude.posY, 
+			      nextDude.posY,
+			      nextDude.width,
 			      orientation, 
 			      ticks);
 	}
