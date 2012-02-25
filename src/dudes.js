@@ -99,6 +99,25 @@ Dudes = (function(){
 	return ANGLE_TO_ORIENTATION[orientIx];
     }
 
+    // Will FAIL SILENTLY if distance from point to region 
+    // is much larger than maxBound - minBound
+    Dudes.prototype.wrap = function(point, minBound, maxBound) {
+	// minBound - maxBound < tiny???
+	var sane = 100;
+
+	while(sane && (minBound > point)) {
+	    sane--
+	    point = maxBound - (minBound - point);
+	}
+
+	while(sane && (maxBound < point)) {
+	    sane --
+	    point = minBound + (point - maxBound);
+	}
+
+	return point;
+    }
+
     Dudes.prototype.update = function(ticks /* ?? */) {
 	this.clean();
 	this.move(ticks);
@@ -118,25 +137,17 @@ Dudes = (function(){
 	    var nextDude = this.dudes[dudeIx];
 	    
 	    this.strategy.call(window, nextDude, [], ticks);
-	    
-	    /***
-	    var angle = Math.floor(ticks + dudeIx / 8) % 
-		Dudes.ANGLE_TO_HEADING.length;
 
-	    var heading = Dudes.ANGLE_TO_HEADING[angle];
-	    var span = 5;
-	    
-	    nextDude.angle = angle;
-	    **/
-	    var span = 5; // SHOULD BE 5 * deltaTicks
+	    var span = 5; // WRONG. should depend on ticks?
 	    var heading = nextDude.heading;
 	    var dx = Math.cos(heading) * span;
 	    var dy = Math.sin(heading) * span;
+	    
+	    var posX = nextDude.posX + dx;
+	    var posY = nextDude.posY + dy;
 
-	    nextDude.posX = 
-		(nextDude.posX + dx) % this.bounds.right;
-	    nextDude.posY = 
-		(nextDude.posY + dy) % this.bounds.bottom;
+	    nextDude.posX = this.wrap(posX, this.bounds.left, this.bounds.right);
+	    nextDude.posY = this.wrap(posY, this.bounds.top, this.bounds.bottom);
 	}
     };
 
