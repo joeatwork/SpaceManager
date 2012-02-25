@@ -27,10 +27,8 @@ Dudes = (function(){
     pixelSheet.src =
 	"resources/images/pixel-person-20x20.png";
 
-    Sprites.prototype.clean = function(posX, posY) {
-        this.gfx.clearRect(posX, 
-			   posY, 
-			   20, 20);
+    Sprites.prototype.clearRect = function(x, y, width, height) {
+        this.gfx.clearRect(x, y, width, height);
     };
 
     /**
@@ -57,79 +55,71 @@ Dudes = (function(){
     //////////////////////////////////////////////////////////
     // MODEL - DRIVES THE VIEW
 
-    var Dudes = function(gfx) {
+    var Dudes = function(gfx, 
+			 xLowBound, xHighBound,
+			 yLowBound, yHighBound,
+			 count, strategy) {
         // A COLLECTION of 'model' Dudes, who scurry around.
 	this.sprites = new Sprites(gfx);
         this.dudes = [];
-        for( var i = 0; i < 5000 ; i++) {
+	this.bounds = {
+	    left: xLowBound,
+	    right: xHighBound,
+	    top: yLowBound,
+	    bottom: yHighBound
+	};
+	this.strategy = strategy;
+
+        for( var i = 0; i < count ; i++) {
             this.dudes.push({
                 posX : Math.floor(Math.random() * 500),
                 posY : Math.floor(Math.random() * 500),
-		angle : 0
+		heading : 0,
             });
 	}
     };
 
-    Dudes.ANGLE_TO_HEADING = [];
-
-    (function() {
-	var angleRange = 20;
-	var radians = (2.0 * Math.PI)/angleRange;
-	for(var angle=0; angle < angleRange; angle++) {
-	    Dudes.ANGLE_TO_HEADING[angle] = {
-		x : Math.cos(angle * radians),
-		y : Math.sin(angle * radians)
-	    };
-	};
-    })();
-
-    // Map our 20 angles to orientations.
-    // Notice angles move COUNTERCLOCKWISE FROM WEST.
-    Dudes.ANGLE_TO_ORIENTATION = [
-	Sprites.RIGHT, // Due West
+    // Angle zero is DUE EAST, so we have to
+    // wrap around.
+    var ANGLE_SCALE = (Math.PI/4.0);
+    var ANGLE_TO_ORIENTATION = [
 	Sprites.RIGHT,
-	Sprites.RIGHT,
-
 	Sprites.DOWN,
 	Sprites.DOWN,
-	Sprites.DOWN, // Due South
-	Sprites.DOWN,
-	Sprites.DOWN,
-
 	Sprites.LEFT,
 	Sprites.LEFT,
-	Sprites.LEFT, // Due East
-	Sprites.LEFT,
-	Sprites.LEFT,
-
 	Sprites.UP,
 	Sprites.UP,
-	Sprites.UP, // Due North
-	Sprites.UP,
-	Sprites.UP,
-
-	Sprites.RIGHT,
 	Sprites.RIGHT
     ];
 
+    Dudes.prototype.orientToward = function(heading) {
+	var orientIx = 
+	    Math.floor(heading / ANGLE_SCALE ) % ANGLE_TO_ORIENTATION.length;
+	return ANGLE_TO_ORIENTATION[orientIx];
+    }
+
     Dudes.prototype.update = function(ticks /* ?? */) {
-	this.clean(ticks);
+	this.clean();
 	this.move(ticks);
 	this.draw(ticks);
     };
 
-    Dudes.prototype.clean = function(ticks) {
-	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
-	    var nextDude = this.dudes[dudeIx];
-	    this.sprites.clean(nextDude.posX,
-			       nextDude.posY);
-	}
+    Dudes.prototype.clean = function() {
+	this.sprites.clearRect(
+	    this.bounds.left, this.bounds.top,
+	    this.bounds.right - this.bounds.left,
+	    this.bounds.bottom - this.bounds.top);
     };
 
 
     Dudes.prototype.move = function(ticks) {
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
+	    
+	    this.strategy.call(window, nextDude, [], ticks);
+	    
+	    /***
 	    var angle = Math.floor(ticks + dudeIx / 8) % 
 		Dudes.ANGLE_TO_HEADING.length;
 
@@ -137,18 +127,24 @@ Dudes = (function(){
 	    var span = 5;
 	    
 	    nextDude.angle = angle;
+	    **/
+	    var span = 5; // SHOULD BE 5 * deltaTicks
+	    var heading = nextDude.heading;
+	    var dx = Math.cos(heading) * span;
+	    var dy = Math.sin(heading) * span;
+
 	    nextDude.posX = 
-		nextDude.posX + (span * heading.x);
+		(nextDude.posX + dx) % this.bounds.right;
 	    nextDude.posY = 
-		nextDude.posY + (span * heading.y);
+		(nextDude.posY + dy) % this.bounds.bottom;
 	}
     };
 
     Dudes.prototype.draw = function(ticks) {
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
-	    var orientation = 
-		Dudes.ANGLE_TO_ORIENTATION[ nextDude.angle ];
+	    
+	    var orientation = this.orientToward(nextDude.heading);
 
 	    this.sprites.draw(nextDude.posX, 
 			      nextDude.posY, 

@@ -13,15 +13,70 @@
           style="border: 1px solid black;">
     We roll HTML5-style up in here, please be advised
   </canvas>
+  <form>
+    <div>
+      <label for="dudeCount"
+	     >How Many</label>
+      <input type="text" id="dudeCount" value="500">
+    </div>
+    <div>
+      <label for="dudeStrategy"
+	     >How Should they Make Decisions?</label>
+      <textarea id="dudeStrategy">
+    // dude - this is the dude you can move or change
+    // neighbors - an array of other dudes "near" your dude
+    // ticks - the time, in abstract "ticks"
+    var curve = (2.0 * Math.PI)/20;
+    dude.heading = dude.heading + curve;
+      </textarea>
+    </div>
+  </form>
 <script>
 window.onload = function() {
     var canvas = document.getElementById("antsCanvas");
     var gfx = canvas.getContext("2d");
     var ticks = 0;
     
-    dudes = new Dudes(gfx);
+    var dudeCount = null;
+    var dudeStrategyTxt = "";
+
+    var dudes = new Dudes(gfx, 
+			  0, canvas.width,
+			  0, canvas.height,
+			  0, (function() {}));
+
+    var checkForm = function() {
+	var newCountTxt =
+	    document.getElementById("dudeCount").value;
+	var newStrategyTxt =
+	    document.getElementById("dudeStrategy").value;
+
+	var newCount = parseInt(newCountTxt, 10);
+
+	if((newCount != dudeCount) ||
+	   (newStrategyTxt != dudeStrategyTxt)) {
+
+	    var newStrategy = 
+		new Function("dude", "neighbors", "ticks",
+			     newStrategyTxt);
+
+	    dudes = new Dudes(gfx, 
+			      0, canvas.width,
+			      0, canvas.height,
+			      newCount, newStrategy);
+
+	    dudeCount = newCount;
+	    dudeStrategyTxt = newStrategyTxt;
+	}	    
+    };
+
     var animation = setInterval(function() {	
 	ticks++;
+
+	if(!(ticks % 10)) {
+	    checkForm();
+	}
+
 	dudes.update(ticks);
     }, 100);
 };
