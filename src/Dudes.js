@@ -140,6 +140,7 @@ Dudes = (function(){
     Dudes.prototype.positionFromHeading = function(dude) {
 	var span = 5; // WRONG. should depend on ticks?
 	var heading = dude.heading;
+
 	var dx = Math.cos(heading) * span;
 	var dy = Math.sin(heading) * span;
 	    
@@ -193,6 +194,11 @@ Dudes = (function(){
 
 	    var neighbors = this.neighbors(nextDude);
 	    this.strategy.call(window, nextDude, neighbors, this.bounds, ticks);
+	    
+	    if(isNaN(Number(nextDude.heading))){
+		throw "Something is wrong, dude came back with a heading of " + nextDude.heading;
+	    }
+
 	    this.positionFromHeading(nextDude);
 
 	    this.space.remove(nextDude.spaceHandle);

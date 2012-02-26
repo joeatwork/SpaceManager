@@ -83,3 +83,55 @@
    }
 
    dude.heading = Math.atan2(targetY, targetX);
+
+// Simple Flocking behavior
+    var personalSpace = dude.width * 5;
+    var consensusForce = dude.width * 20;
+
+    var othersX = 0;
+    var othersY = 0;
+    var othersHeading = 0;
+    for(var nIx=0; nIx<neighbors.length; nIx++) {
+	othersX += neighbors[nIx].posX;
+	othersY += neighbors[nIx].posY;
+	othersHeading += neighbors[nIx].heading;
+    }
+
+    var centerX = othersX / neighbors.length;
+    var centerY = othersY / neighbors.length;
+
+    var consensusHeading = othersHeading / neighbors.length;
+    var consensusX = Math.cos(consensusHeading);
+    var consensusY = Math.sin(consensusHeading);
+
+    var flockX = centerX - dude.posX;
+    var flockY = centerY - dude.posY;
+
+    var flockDistance =
+        Math.sqrt((flockX * flockX) + (flockY * flockY));
+
+    var flockForce = flockDistance - personalSpace;
+    var useX = 
+        (consensusX * consensusForce) + (flockX * flockForce);
+    var useY = 
+        (consensusY * consensusForce) + (flockY * flockForce);
+
+
+    if(dude.posX + dude.width + personalSpace > bounds.right)
+	useX -= personalSpace;
+    else if(dude.posX + personalSpace < bounds.left)
+	useX += personalSpace;
+
+    if(dude.posY + dude.width + personalSpace > bounds.bottom)
+	useY -= personalSpace;
+    else if(dude.posY + personalSpace < bounds.top)
+	useY += personalSpace;
+
+    dude.feedback = {
+	useX : useX, useY : useY, flockForce : flockForce,
+	consensusHeading : consensusHeading,
+	consensusX : consensusX, consensusY : consensusY
+    };
+
+    dude.heading = Math.atan2(useY, useX);
+    
