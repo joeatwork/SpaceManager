@@ -61,6 +61,8 @@ Dudes = (function(){
     //////////////////////////////////////////////////////////
     // MODEL - DRIVES THE VIEW
 
+    var INITIAL_DUDE_WIDTH = 20;
+
     var Dudes = function(gfx, 
 			 xLowBound, xHighBound,
 			 yLowBound, yHighBound,
@@ -74,6 +76,8 @@ Dudes = (function(){
 	    top: yLowBound,
 	    bottom: yHighBound
 	};
+	this.neighborhoodSize = INITIAL_DUDE_WIDTH; 
+
 	this.strategy = strategy;
 	this.space = SpaceManager.treeSpace(this.bounds.left,
 					    this.bounds.right,
@@ -85,13 +89,13 @@ Dudes = (function(){
                 posX : Math.floor(Math.random() * 500),
                 posY : Math.floor(Math.random() * 500),
 		heading : 0,
-		width : 10 // CHANGEME TO 20
+		width : INITIAL_DUDE_WIDTH
             };
             this.dudes.push(newDude);
-	    newDude.spaceHandle = this.space.add(newDude, 
-						 newDude.posX, newDude.posY,
-						 newDude.posX + newDude.width,
-						 newDude.posY + newDude.width);
+	    newDude.spaceHandle = 
+		this.space.add(newDude, 
+			       newDude.posX, newDude.posX + newDude.width,
+			       newDude.posY, newDude.posY + newDude.width);
 	}
     };
 
@@ -133,6 +137,43 @@ Dudes = (function(){
 	return point;
     }
 
+    Dudes.prototype.positionFromHeading = function(dude) {
+	var span = 5; // WRONG. should depend on ticks?
+	var heading = dude.heading;
+	var dx = Math.cos(heading) * span;
+	var dy = Math.sin(heading) * span;
+	    
+	var posX = dude.posX + dx;
+	var posY = dude.posY + dy;	    
+
+	dude.posX = this.wrap(posX, this.bounds.left, this.bounds.right);
+	dude.posY = this.wrap(posY, this.bounds.top, this.bounds.bottom);
+	dude.heading = this.wrap(heading, 0, 2.0 * Math.PI);
+    };
+
+    Dudes.prototype.neighbors = function(dude) {
+	var expand = this.neighborhoodSize;
+
+	var dudeLeft = dude.posX;
+	var dudeTop = dude.posY;
+	var dudeRight = dudeLeft + dude.width;
+	var dudeBottom = dudeTop + dude.height;
+	
+	var neighbors = this.space.find(
+	    dudeLeft - expand,
+	    dudeRight + expand,
+	    dudeTop - expand,
+	    dudeBottom + expand
+	);
+
+	if(neighbors.length < 2)
+	    this.neighborhoodSize = expand * 2;
+	else if(neighbors.length > 20)
+	    this.neighborhoodSize = expand / 2.0;
+
+	return neighbors;
+    };
+
     Dudes.prototype.update = function(ticks /* ?? */) {
 	this.clean();
 	this.move(ticks);
@@ -149,19 +190,18 @@ Dudes = (function(){
     Dudes.prototype.move = function(ticks) {
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
-	    
-	    this.strategy.call(window, nextDude, [], ticks);
 
-	    var span = 5; // WRONG. should depend on ticks?
-	    var heading = nextDude.heading;
-	    var dx = Math.cos(heading) * span;
-	    var dy = Math.sin(heading) * span;
-	    
-	    var posX = nextDude.posX + dx;
-	    var posY = nextDude.posY + dy;
+	    var neighbors = this.neighbors(nextDude);
+	    this.strategy.call(window, nextDude, neighbors, this.bounds, ticks);
+	    this.positionFromHeading(nextDude);
 
-	    nextDude.posX = this.wrap(posX, this.bounds.left, this.bounds.right);
-	    nextDude.posY = this.wrap(posY, this.bounds.top, this.bounds.bottom);
+	    this.space.remove(nextDude.spaceHandle);
+	    nextDude.spaceHandle = 
+		this.space.add(nextDude, 
+			       nextDude.posX, 
+			       nextDude.posX + nextDude.width,
+			       nextDude.posY, 
+			       nextDude.posY + nextDude.width);
 	}
     };
 

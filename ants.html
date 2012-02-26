@@ -57,7 +57,7 @@ window.onload = function() {
 	   (newStrategyTxt != dudeStrategyTxt)) {
 
 	    var newStrategy = 
-		new Function("dude", "neighbors", "ticks",
+		new Function("dude", "neighbors", "bounds", "ticks", 
 			     newStrategyTxt);
 
 	    dudes = new Dudes(gfx, 
