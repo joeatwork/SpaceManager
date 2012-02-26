@@ -158,7 +158,7 @@ Dudes = (function(){
 	var dudeLeft = dude.posX;
 	var dudeTop = dude.posY;
 	var dudeRight = dudeLeft + dude.width;
-	var dudeBottom = dudeTop + dude.height;
+	var dudeBottom = dudeTop + dude.width;
 	
 	var neighbors = this.space.find(
 	    dudeLeft - expand,
@@ -167,10 +167,14 @@ Dudes = (function(){
 	    dudeBottom + expand
 	);
 
-	if(neighbors.length < 2)
-	    this.neighborhoodSize = expand * 2;
-	else if(neighbors.length > 20)
-	    this.neighborhoodSize = expand / 2.0;
+	if(neighbors.length < 2) {
+	    this.neighborhoodSize = expand + 1;
+	}
+	else if((neighbors.length > 20) && (expand > 1)) {
+	    // we need an underflow guard or neighborhood
+	    // size grounds out at 0
+	    this.neighborhoodSize = expand - 1;
+	}
 
 	return neighbors;
     };
