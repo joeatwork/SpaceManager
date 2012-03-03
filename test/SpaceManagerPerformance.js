@@ -26,7 +26,7 @@ spaceManagerPerformance = function() {
     };
 
     // var TEST_SIZE = 50000;
-    var TEST_SIZE = 50000;
+    var TEST_SIZE = 100000;
 
     // Approximately our target use case
     var intNoise = [];
