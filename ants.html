@@ -9,7 +9,7 @@
 <script src="src/Dudes.js"></script>
 <body>
   <canvas id="antsCanvas" 
-          width="500" height="500" 
+          width="800" height="500" 
           style="border: 1px solid black;">
     We roll HTML5-style up in here, please be advised
   </canvas>
@@ -40,10 +40,12 @@ window.onload = function() {
     var dudeCount = null;
     var dudeStrategyTxt = "";
 
+    // We fudge the boundaries a bit to
+    // stop 
     var dudes = new Dudes(gfx, 
-			  0, canvas.width,
-			  0, canvas.height,
-			  0, (function() {}));
+			  -20 , canvas.width,
+			  -20, canvas.height,
+			  -20, (function() {}));
 
     var checkForm = function() {
 	var newCountTxt =
@@ -61,8 +63,8 @@ window.onload = function() {
 			     newStrategyTxt);
 
 	    dudes = new Dudes(gfx, 
-			      0, canvas.width,
-			      0, canvas.height,
+			      -20, canvas.width,
+			      -20, canvas.height,
 			      newCount, newStrategy);
 
 	    dudeCount = newCount;

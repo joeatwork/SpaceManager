@@ -9,27 +9,12 @@ Dudes = (function(){
 	this.gfx = gfx;
     };
 
-    // There is a bit of punning on these values,
-    // It isn't safe to change these numbers.
-    Sprites.DOWN = 0;
-    Sprites.UP = 1;
-    Sprites.RIGHT = 2;
-    Sprites.LEFT = 3;
-
-    Sprites.SHEET_CELL_SIZE = 20;
-    Sprites.sheet = null;
-    
-
-    Sprites.setSheet = function(sheet) { /* ??? */
-        Sprites.sheet = sheet;
-    };
-
-    var pixelSheet = new Image();
-    pixelSheet.onload = function() {
-	Sprites.setSheet(pixelSheet);
-    };
-    pixelSheet.src =
-	"resources/images/pixel-person-20x20.png";
+    Sprites.R = "rgba(200,   0,   0, 0.2)";
+    Sprites.G = "rgba(  0, 200,   0, 0.2)";
+    Sprites.B = "rgba(  0,   0, 200, 0.2)";
+    Sprites.COLORS = [ Sprites.R, 
+		       Sprites.G, 
+		       Sprites.B ];
 
     Sprites.prototype.clearRect = function(x, y, width, height) {
         this.gfx.clearRect(x, y, width, height);
@@ -37,25 +22,11 @@ Dudes = (function(){
 
     /**
      * posX, posY : x and y offsets
-     * orientation : one of UP, DOWN, LEFT, RIGHT
      * ticks : absolute animation time
      */
-    Sprites.prototype.draw = function(posX, posY, width, orientation, ticks) {
-	if(! Sprites.sheet) return;
-
-        var cell = ticks % 2;	
-        var cellOffset = 
-	    (orientation * Sprites.SHEET_CELL_SIZE * 2) + 
-	    (cell * Sprites.SHEET_CELL_SIZE);
-        this.gfx.drawImage(Sprites.sheet,
-			   0, // source x
-			   cellOffset, // source Y
-			   Sprites.SHEET_CELL_SIZE, // source width
-			   Sprites.SHEET_CELL_SIZE, // source height
-			   posX, // dest x
-			   posY, // dest y
-			   width, // dest width
-			   width); // dest height
+    Sprites.prototype.draw = function(posX, posY, width, color) {
+	this.gfx.fillStyle = color;
+	this.gfx.fillRect(posX, posY, width, width);
     };
 
     //////////////////////////////////////////////////////////
@@ -84,12 +55,23 @@ Dudes = (function(){
 					    this.bounds.top,
 					    this.bounds.bottom);
 
+	var fieldWidth = xHighBound - xLowBound;
+	var fieldHeight = yHighBound - yLowBound;
+
         for( var i = 0; i < count ; i++) {
+	    var colorIndex =
+		Math.floor(Math.random() * Sprites.COLORS.length);
+	    var posX =
+		xLowBound + (Math.random() * fieldWidth);
+	    var posY =
+		yLowBound + (Math.random() * fieldHeight);
+
 	    var newDude = {
-                posX : Math.floor(Math.random() * 500),
-                posY : Math.floor(Math.random() * 500),
-		heading : 0,
-		width : INITIAL_DUDE_WIDTH
+                posX : posX,
+                posY : posY,
+		heading : Math.random() * Math.PI * 2,
+		width : INITIAL_DUDE_WIDTH,
+		color : Sprites.COLORS[ colorIndex ]
             };
             this.dudes.push(newDude);
 	    newDude.spaceHandle = 
@@ -98,26 +80,6 @@ Dudes = (function(){
 			       newDude.posY, newDude.posY + newDude.width);
 	}
     };
-
-    // Angle zero is DUE EAST, so we have to
-    // wrap around.
-    var ANGLE_SCALE = (Math.PI/4.0);
-    var ANGLE_TO_ORIENTATION = [
-	Sprites.RIGHT,
-	Sprites.DOWN,
-	Sprites.DOWN,
-	Sprites.LEFT,
-	Sprites.LEFT,
-	Sprites.UP,
-	Sprites.UP,
-	Sprites.RIGHT
-    ];
-
-    Dudes.prototype.orientToward = function(heading) {
-	var orientIx = 
-	    Math.floor(heading / ANGLE_SCALE ) % ANGLE_TO_ORIENTATION.length;
-	return ANGLE_TO_ORIENTATION[orientIx];
-    }
 
     // Will FAIL SILENTLY if distance from point to region 
     // is much larger than maxBound - minBound
@@ -218,14 +180,10 @@ Dudes = (function(){
     Dudes.prototype.draw = function(ticks) {
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
-	    
-	    var orientation = this.orientToward(nextDude.heading);
-
 	    this.sprites.draw(nextDude.posX, 
 			      nextDude.posY,
 			      nextDude.width,
-			      orientation, 
-			      ticks);
+			      nextDude.color);
 	}
     };
 
