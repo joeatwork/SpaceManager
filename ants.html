@@ -19,6 +19,7 @@
 	     >How Many</label>
       <input type="text" id="dudeCount" value="500">
     </div>
+    <div id="fps">NA</div>
     <div>
       <label for="dudeStrategy"
 	     >How Should they Make Decisions?</label>
@@ -119,7 +120,12 @@ window.onload = function() {
     var frames = 0;
     var fps = function() {
         var timeMs = (new Date()) - timeZero;
-        return frames/(timesMs/1000);
+        return Math.floor(frames/(timeMs/1000));
+    };
+
+    var setFPS = function() {
+        var fpsElement = document.getElementById("fps");
+        fpsElement.innerHTML = "" + fps();
     };
 
     var animation = setInterval(function() {	
@@ -127,8 +133,9 @@ window.onload = function() {
         var ticks = ticksMs / 100;
         frames++;
 
-	if(!(frames % 10)) {
+	if(!(frames % 20)) {
 	    readForm();
+            setFPS();
 	}
 
 	dudes.update(ticks);
