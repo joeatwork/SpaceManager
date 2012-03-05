@@ -50,7 +50,6 @@
     dude.heading = swerve;
       
 // Billiard ball
-
    var targetX = Math.sin(dude.heading);
    var targetY = Math.cos(dude.heading);
 

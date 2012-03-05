@@ -9,36 +9,30 @@ Dudes = (function(){
 	this.gfx = gfx;
     };
 
-    Sprites.R = "rgba(200,   0,   0, 0.2)";
-    Sprites.G = "rgba(  0, 200,   0, 0.2)";
-    Sprites.B = "rgba(  0,   0, 200, 0.2)";
-    Sprites.COLORS = [ Sprites.R, 
-		       Sprites.G, 
-		       Sprites.B ];
-
     Sprites.prototype.clearRect = function(x, y, width, height) {
         this.gfx.clearRect(x, y, width, height);
     };
 
     /**
      * posX, posY : x and y offsets
-     * ticks : absolute animation time
      */
-    Sprites.prototype.draw = function(posX, posY, width, color) {
-	this.gfx.fillStyle = color;
-	this.gfx.fillRect(posX, posY, width, width);
+    Sprites.prototype.draw = function(posX, posY, width) {
+	this.gfx.strokeStyle = "#000";
+	this.gfx.lineWidth = 1;
+	this.gfx.strokeRect(posX, posY, width, width);
     };
 
     //////////////////////////////////////////////////////////
     // MODEL - DRIVES THE VIEW
 
-    var INITIAL_DUDE_WIDTH = 20;
+    var INITIAL_DUDE_WIDTH = 10;
 
     var Dudes = function(gfx, 
 			 xLowBound, xHighBound,
 			 yLowBound, yHighBound,
 			 count, strategy) {
         // A COLLECTION of 'model' Dudes, who scurry around.
+	this.time = null;
 	this.sprites = new Sprites(gfx);
         this.dudes = [];
 	this.bounds = {
@@ -59,8 +53,6 @@ Dudes = (function(){
 	var fieldHeight = yHighBound - yLowBound;
 
         for( var i = 0; i < count ; i++) {
-	    var colorIndex =
-		Math.floor(Math.random() * Sprites.COLORS.length);
 	    var posX =
 		xLowBound + (Math.random() * fieldWidth);
 	    var posY =
@@ -70,8 +62,7 @@ Dudes = (function(){
                 posX : posX,
                 posY : posY,
 		heading : Math.random() * Math.PI * 2,
-		width : INITIAL_DUDE_WIDTH,
-		color : Sprites.COLORS[ colorIndex ]
+		width : INITIAL_DUDE_WIDTH
             };
             this.dudes.push(newDude);
 	    newDude.spaceHandle = 
@@ -99,12 +90,11 @@ Dudes = (function(){
 	return point;
     }
 
-    Dudes.prototype.positionFromHeading = function(dude) {
-	var span = 5; // WRONG. should depend on ticks?
+    Dudes.prototype.positionFromHeading = function(dude, distance) {
 	var heading = dude.heading;
 
-	var dx = Math.cos(heading) * span;
-	var dy = Math.sin(heading) * span;
+	var dx = Math.cos(heading) * distance;
+	var dy = Math.sin(heading) * distance;
 	    
 	var posX = dude.posX + dx;
 	var posY = dude.posY + dy;	    
@@ -122,6 +112,10 @@ Dudes = (function(){
 	var dudeRight = dudeLeft + dude.width;
 	var dudeBottom = dudeTop + dude.width;
 	
+	// TODO: wrap around bounds when checking for neighbors.
+	//  that is
+	//  if(dudeLeft < bounds.left) also find in
+        //     bounds.right - (bounds.left - dudeLeft) 
 	var neighbors = this.space.find(
 	    dudeLeft - expand,
 	    dudeRight + expand,
@@ -141,10 +135,15 @@ Dudes = (function(){
 	return neighbors;
     };
 
-    Dudes.prototype.update = function(ticks /* ?? */) {
-	this.clean();
-	this.move(ticks);
-	this.draw(ticks);
+    Dudes.prototype.update = function(absTime) {
+	if(this.time) {
+	    var ticks = absTime - this.time;	
+	    this.move(ticks);
+
+	    this.clean();
+	    this.draw(ticks);
+	}
+	this.time = absTime;
     };
 
     Dudes.prototype.clean = function() {
@@ -155,6 +154,9 @@ Dudes = (function(){
     };
 
     Dudes.prototype.move = function(ticks) {
+	var speed = 5;
+	var distance = speed * ticks;
+
 	for(var dudeIx=0; dudeIx < this.dudes.length; dudeIx++) {
 	    var nextDude = this.dudes[dudeIx];
 
@@ -163,9 +165,9 @@ Dudes = (function(){
 	    
 	    if(isNaN(Number(nextDude.heading))){
 		throw "Something is wrong, dude came back with a heading of " + nextDude.heading;
-	    }
+	    }	    
 
-	    this.positionFromHeading(nextDude);
+	    this.positionFromHeading(nextDude, distance);
 
 	    this.space.remove(nextDude.spaceHandle);
 	    nextDude.spaceHandle = 
@@ -182,8 +184,7 @@ Dudes = (function(){
 	    var nextDude = this.dudes[dudeIx];
 	    this.sprites.draw(nextDude.posX, 
 			      nextDude.posY,
-			      nextDude.width,
-			      nextDude.color);
+			      nextDude.width);
 	}
     };
 
