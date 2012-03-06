@@ -527,6 +527,10 @@ SpaceManager = (function() {
 	return handle.contents;
     };
 
+    SpaceManager.prototype.setHandleContents = function(handle, contents) {
+	handle.contents = contents;
+    };
+
     SpaceManager.prototype.containsHandle = function(handle) {
 	return this.handles[ handle.hashCode ];
     }

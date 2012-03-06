@@ -30,7 +30,7 @@ Dudes = (function(){
     var Dudes = function(gfx, 
 			 xLowBound, xHighBound,
 			 yLowBound, yHighBound,
-			 count, strategy) {
+			 strategy) {
         // A COLLECTION of 'model' Dudes, who scurry around.
 	this.time = null;
 	this.sprites = new Sprites(gfx);
@@ -48,15 +48,17 @@ Dudes = (function(){
 					    this.bounds.right,
 					    this.bounds.top,
 					    this.bounds.bottom);
+    };
 
-	var fieldWidth = xHighBound - xLowBound;
-	var fieldHeight = yHighBound - yLowBound;
+    Dudes.prototype.spawn = function(count) {
+	var fieldWidth = this.bounds.right - this.bounds.left;
+	var fieldHeight = this.bounds.bottom - this.bounds.top;
 
         for( var i = 0; i < count ; i++) {
 	    var posX =
-		xLowBound + (Math.random() * fieldWidth);
+		this.bounds.left + (Math.random() * fieldWidth);
 	    var posY =
-		yLowBound + (Math.random() * fieldHeight);
+		this.bounds.top + (Math.random() * fieldHeight);
 
 	    var newDude = {
                 posX : posX,
@@ -70,6 +72,22 @@ Dudes = (function(){
 			       newDude.posX, newDude.posX + newDude.width,
 			       newDude.posY, newDude.posY + newDude.width);
 	}
+    };
+
+    Dudes.prototype.reap = function(count) {
+	var reapCount = (count > 0 ? count : this.dudes.length);
+
+	for(var i = 0; this.dudes.length && (i < reapCount); i++) {
+	    var reapedIx = Math.floor(Math.random() * this.dudes.length);
+	    var reaped = this.dudes.splice(reapedIx, 1)[0];
+	    this.space.remove(reaped.spaceHandle);
+	    this.space.setHandleContents(reaped.spaceHandle, null);
+	    reaped.spaceHandle = null;
+	}
+    };
+
+    Dudes.prototype.dudeCount = function() {
+	return this.dudes.length;
     };
 
     // Will FAIL SILENTLY if distance from point to region 

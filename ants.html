@@ -14,11 +14,7 @@
     We roll HTML5-style up in here, please be advised
   </canvas>
   <form>
-    <div>
-      <label for="dudeCount"
-	     >How Many</label>
-      <input type="text" id="dudeCount" value="500">
-    </div>
+    <div id="dudeCount"></div>
     <div id="fps">NA</div>
     <div>
       <label for="dudeStrategy"
@@ -78,10 +74,9 @@ window.onload = function() {
     var gfx = canvas.getContext("2d");
     var ticks = 0;
     
-    var dudeCount = null;
     var dudeStrategyTxt = "";
 
-    var makeDudes = function(dudeCount, dudeStrategyTxt) {
+    var makeDudes = function(dudeStrategyTxt) {
         var dudeStrategy = 
 		new Function("dude", "neighbors", "bounds", "ticks", 
 			     dudeStrategyTxt);
@@ -90,56 +85,76 @@ window.onload = function() {
         // so dudes don't appear to teleport near
         // the low bounds of the canvas
 
-        return new Dudes(gfx, 
-                         -20, canvas.width,
-			 -20, canvas.height,
-                         dudeCount, dudeStrategy);
+        var ret = new Dudes(gfx, 
+			    -20, canvas.width,
+			    -20, canvas.height,
+                            dudeStrategy);
+
+	ret.spawn(1000);
+
+	return ret;
     };
 
-    var dudes = makeDudes(0, dudeStrategyTxt);
+    var dudes = makeDudes(dudeStrategyTxt);
 
-    var readForm = function() {
-	var newCountTxt =
-	    document.getElementById("dudeCount").value;
+    var frameZero = new Date();
+    var frames = 0;
+    var fps = function() {
+        var timeMs = (new Date()) - frameZero;
+        return Math.floor(frames/(timeMs/1000));
+    };
+
+    var resetFps = function() {
+	frameZero = new Date();
+	frames=0;
+    };
+
+    var targetFPS = 20;
+    var updateDudeCount = function() {
+       var currentFPS = fps();
+       if(currentFPS > targetFPS) {
+	   dudes.spawn(5);
+       }
+       else if(currentFPS < targetFPS) {
+	   dudes.reap(4);
+       }
+    };
+
+    var updateModel = function() {
 	var newStrategyTxt =
 	    document.getElementById("dudeStrategy").value;
 
-	var newCount = parseInt(newCountTxt, 10);
+	var newCount = 
+            updateDudeCount();
 
-	if((newCount != dudeCount) ||
-	   (newStrategyTxt != dudeStrategyTxt)) {
-
-	    dudes = makeDudes(newCount, newStrategyTxt);
-
-	    dudeCount = newCount;
+	if(newStrategyTxt != dudeStrategyTxt) {
+	    dudes = makeDudes(newStrategyTxt);
 	    dudeStrategyTxt = newStrategyTxt;
 	}	    
     };
 
-    var timeZero = new Date();
-    var frames = 0;
-    var fps = function() {
-        var timeMs = (new Date()) - timeZero;
-        return Math.floor(frames/(timeMs/1000));
-    };
-
-    var setFPS = function() {
+    var showPerformance = function() {
         var fpsElement = document.getElementById("fps");
-        fpsElement.innerHTML = "" + fps();
+        fpsElement.innerHTML = "" + fps() + " frames per sec";
+
+        var countElement = document.getElementById("dudeCount");
+        countElement.innerHTML = "" + dudes.dudeCount() + " particles";
     };
 
+    var timeZero = new Date();
     var animation = setInterval(function() {	
         var ticksMs = (new Date()) - timeZero;
         var ticks = ticksMs / 100;
         frames++;
 
-	if(!(frames % 20)) {
-	    readForm();
-            setFPS();
+	if(!(frames % 30)) {
+	    updateModel();
+            showPerformance();
+	    resetFps();
 	}
 
 	dudes.update(ticks);
-    }, 1);
+    }, 40);
 };
 </script>
 </body>
