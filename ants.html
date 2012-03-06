@@ -7,6 +7,7 @@
 <script src="lib/modernizr-1.6.min.js"></script>
 <script src="src/SpaceManager.js"></script>
 <script src="src/Dudes.js"></script>
+<script src="src/Animator.js"></script>
 <body>
   <canvas id="antsCanvas" 
           width="800" height="500" 
@@ -17,9 +18,7 @@
     <div id="dudeCount"></div>
     <div id="fps">NA</div>
     <div>
-      <label for="dudeStrategy"
-	     >How Should they Make Decisions?</label>
-      <textarea id="dudeStrategy">
+      <textarea id="dudeStrategy" style="width: 800px; height: 500px;">
     // dude - this is the dude you can move or change.
     //   MOSTLY, you'll want to set dude.heading to some value
     //   between 0 and (2 * Math.PI)
@@ -76,6 +75,7 @@ window.onload = function() {
     
     var dudeStrategyTxt = "";
 
+    var dudes = null;    
     var makeDudes = function(dudeStrategyTxt) {
         var dudeStrategy = 
 		new Function("dude", "neighbors", "bounds", "ticks", 
@@ -95,23 +95,8 @@ window.onload = function() {
 	return ret;
     };
 
-    var dudes = makeDudes(dudeStrategyTxt);
-
-    var frameZero = new Date();
-    var frames = 0;
-    var fps = function() {
-        var timeMs = (new Date()) - frameZero;
-        return Math.floor(frames/(timeMs/1000));
-    };
-
-    var resetFps = function() {
-	frameZero = new Date();
-	frames=0;
-    };
-
     var targetFPS = 20;
-    var updateDudeCount = function() {
-       var currentFPS = fps();
+    var updateDudeCount = function(currentFPS) {
        if(currentFPS > targetFPS) {
 	   dudes.spawn(5);
        }
@@ -120,12 +105,12 @@ window.onload = function() {
        }
     };
 
+    var animator = new Animator(40);
     var updateModel = function() {
 	var newStrategyTxt =
 	    document.getElementById("dudeStrategy").value;
 
-	var newCount = 
-            updateDudeCount();
+        updateDudeCount(animator.fps());
 
 	if(newStrategyTxt != dudeStrategyTxt) {
 	    dudes = makeDudes(newStrategyTxt);
@@ -135,26 +120,26 @@ window.onload = function() {
 
     var showPerformance = function() {
         var fpsElement = document.getElementById("fps");
-        fpsElement.innerHTML = "" + fps() + " frames per sec";
+        fpsElement.innerHTML = "" + animator.fps() + " frames per sec";
 
         var countElement = document.getElementById("dudeCount");
         countElement.innerHTML = "" + dudes.dudeCount() + " particles";
     };
 
-    var timeZero = new Date();
-    var animation = setInterval(function() {	
-        var ticksMs = (new Date()) - timeZero;
-        var ticks = ticksMs / 100;
-        frames++;
 
-	if(!(frames % 30)) {
+    var calls = 0;
+    updateModel();
+    animator.start(function(ticks) {
+	if(!(calls % 20)) {
 	    updateModel();
             showPerformance();
-	    resetFps();
+	    animator.resetFps();
 	}
-
+	
 	dudes.update(ticks);
-    }, 40);
+	calls++;
+    });
+
 };
 </script>
 </body>
